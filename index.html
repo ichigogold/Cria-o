@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jogo da Nave</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #111;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Carregando imagens
+    const imgNave = new Image();
+    imgNave.src = "images.jpeg";
+
+    const imgInimigo = new Image();
+    imgInimigo.src = "123.jpeg";
+
+    const imgFundo = new Image();
+    imgFundo.src = "photo.jpeg";
+
+    // Objetos do jogo
+    let player = { x: 180, y: 500, width: 40, height: 40 };
+    let bullets = [];
+    let enemies = [{ x: 180, y: 0, width: 40, height: 40 }];
+    let keys = {};
+
+    // Controles
+    document.addEventListener("keydown", (e) => {
+      keys[e.key] = true;
+      if (e.key === " ") {
+        bullets.push({ x: player.x + 18, y: player.y });
+      }
+    });
+
+    document.addEventListener("keyup", (e) => {
+      keys[e.key] = false;
+    });
+
+    function update() {
+      // Movimento do jogador
+      if (keys["ArrowLeft"] && player.x > 0) {
+        player.x -= 5;
+      }
+      if (keys["ArrowRight"] && player.x < canvas.width - player.width) {
+        player.x += 5;
+      }
+
+      // Movimento dos tiros
+      bullets.forEach((b, i) => {
+        b.y -= 7;
+        if (b.y < 0) bullets.splice(i, 1);
+      });
+
+      // Movimento dos inimigos + colisão
+      enemies.forEach((enemy, ei) => {
+        enemy.y += 2;
+
+        bullets.forEach((b, bi) => {
+          if (
+            b.x < enemy.x + enemy.width &&
+            b.x + 4 > enemy.x &&
+            b.y < enemy.y + enemy.height &&
+            b.y + 10 > enemy.y
+          ) {
+            enemies.splice(ei, 1);
+            bullets.splice(bi, 1);
+          }
+        });
+      });
+
+      // Reposição dos inimigos
+      if (enemies.length === 0) {
+        enemies.push({
+          x: Math.random() * (canvas.width - 40),
+          y: 0,
+          width: 40,
+          height: 40
+        });
+      }
+    }
+
+    function draw() {
+      // Fundo
+      ctx.drawImage(imgFundo, 0, 0, canvas.width, canvas.height);
+
+      // Jogador
+      ctx.drawImage(imgNave, player.x, player.y, player.width, player.height);
+
+      // Tiros
+      ctx.fillStyle = "fenx.jpg";
+      bullets.forEach((b) => {
+        ctx.fillRect(b.x, b.y, 4, 10);
+      });
+
+      // Inimigos
+      enemies.forEach((e) => {
+        ctx.drawImage(imgInimigo, e.x, e.y, e.width, e.height);
+      });
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>
