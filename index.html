@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -38,6 +38,8 @@
     let bullets = [];
     let enemies = [{ x: 180, y: 0, width: 40, height: 40 }];
     let keys = {};
+    let vidas = 3;
+    let gameOver = false;
 
     // Controles
     document.addEventListener("keydown", (e) => {
@@ -52,6 +54,8 @@
     });
 
     function update() {
+      if (gameOver) return;
+
       // Movimento do jogador
       if (keys["ArrowLeft"] && player.x > 0) {
         player.x -= 5;
@@ -66,10 +70,26 @@
         if (b.y < 0) bullets.splice(i, 1);
       });
 
-      // Movimento dos inimigos + colisão
+      // Movimento dos inimigos + colisão com tiros
       enemies.forEach((enemy, ei) => {
         enemy.y += 2;
 
+        // Colisão com o jogador
+        if (
+          player.x < enemy.x + enemy.width &&
+          player.x + player.width > enemy.x &&
+          player.y < enemy.y + enemy.height &&
+          player.y + player.height > enemy.y
+        ) {
+          enemies.splice(ei, 1);
+          vidas--;
+
+          if (vidas <= 0) {
+            gameOver = true;
+          }
+        }
+
+        // Colisão com tiros
         bullets.forEach((b, bi) => {
           if (
             b.x < enemy.x + enemy.width &&
@@ -84,7 +104,7 @@
       });
 
       // Reposição dos inimigos
-      if (enemies.length === 0) {
+      if (enemies.length === 0 && !gameOver) {
         enemies.push({
           x: Math.random() * (canvas.width - 40),
           y: 0,
@@ -102,7 +122,7 @@
       ctx.drawImage(imgNave, player.x, player.y, player.width, player.height);
 
       // Tiros
-      ctx.fillStyle = "fenx.jpg";
+      ctx.fillStyle = "red";
       bullets.forEach((b) => {
         ctx.fillRect(b.x, b.y, 4, 10);
       });
@@ -111,6 +131,18 @@
       enemies.forEach((e) => {
         ctx.drawImage(imgInimigo, e.x, e.y, e.width, e.height);
       });
+
+      // HUD: Vidas
+      ctx.fillStyle = "white";
+      ctx.font = "20px Arial";
+      ctx.fillText("Vidas: " + vidas, 10, 30);
+
+      // Fim de jogo
+      if (gameOver) {
+        ctx.fillStyle = "red";
+        ctx.font = "40px Arial";
+        ctx.fillText("FIM DE JOGO", 80, canvas.height / 2);
+      }
     }
 
     function loop() {
