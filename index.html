@@ -1,47 +1,60 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <title>Jogo da Nave</title>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
-    }
-    canvas {
-      display: block;
-      margin: 0 auto;
-      background: #111;
-    }
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas" width="400" height="600"></canvas>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+
   <script>
+    // Variáveis 2D do jogo
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    // Carregando imagens
+    // Imagens 2D
     const imgNave = new Image();
     imgNave.src = "images.jpeg";
-
     const imgInimigo = new Image();
     imgInimigo.src = "123.jpeg";
-
     const imgFundo = new Image();
     imgFundo.src = "photo.jpeg";
+    const imgPortal = new Image();
+    imgPortal.src = "portal.png";
 
     // Objetos do jogo
     let player = { x: 180, y: 500, width: 40, height: 40 };
     let bullets = [];
-    let enemies = [{ x: 180, y: 0, width: 40, height: 40 }];
-    let keys = {};
-    let vidas = 3;
+    let enemies = [];
+    let portal = null;
+    let pontos = 0;
     let gameOver = false;
+    let pause = false;
+    let wave = 1;
+    let vidas = 3;
 
-    // Controles
+    // Função para criar inimigos
+    function spawnEnemies(qtd) {
+      for (let i = 0; i < qtd; i++) {
+        enemies.push({
+          x: Math.random() * (canvas.width - 40),
+          y: Math.random() * -300,
+          width: 40,
+          height: 40
+        });
+      }
+    }
+
+    spawnEnemies(3); // primeira onda
+
+    // Funções de controle
+    let keys = {};
     document.addEventListener("keydown", (e) => {
       keys[e.key] = true;
       if (e.key === " ") {
@@ -53,28 +66,23 @@
       keys[e.key] = false;
     });
 
+    // Atualizações do jogo 2D
     function update() {
-      if (gameOver) return;
+      if (gameOver || pause) return;
 
       // Movimento do jogador
-      if (keys["ArrowLeft"] && player.x > 0) {
-        player.x -= 5;
-      }
-      if (keys["ArrowRight"] && player.x < canvas.width - player.width) {
-        player.x += 5;
-      }
+      if (keys["ArrowLeft"] && player.x > 0) player.x -= 5;
+      if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += 5;
 
-      // Movimento dos tiros
+      // Movimentos dos tiros
       bullets.forEach((b, i) => {
         b.y -= 7;
         if (b.y < 0) bullets.splice(i, 1);
       });
 
-      // Movimento dos inimigos + colisão com tiros
+      // Colisão com inimigos
       enemies.forEach((enemy, ei) => {
         enemy.y += 2;
-
-        // Colisão com o jogador
         if (
           player.x < enemy.x + enemy.width &&
           player.x + player.width > enemy.x &&
@@ -83,10 +91,7 @@
         ) {
           enemies.splice(ei, 1);
           vidas--;
-
-          if (vidas <= 0) {
-            gameOver = true;
-          }
+          if (vidas <= 0) gameOver = true;
         }
 
         // Colisão com tiros
@@ -99,43 +104,59 @@
           ) {
             enemies.splice(ei, 1);
             bullets.splice(bi, 1);
+            pontos += 100;
           }
         });
       });
 
-      // Reposição dos inimigos
+      // Reposição de inimigos
       if (enemies.length === 0 && !gameOver) {
-        enemies.push({
+        wave++;
+        spawnEnemies(3 + wave);
+      }
+
+      // Criar portal ao atingir 100.000 pontos
+      if (!portal && pontos >= 100000) {
+        portal = {
           x: Math.random() * (canvas.width - 40),
-          y: 0,
+          y: 50,
           width: 40,
           height: 40
-        });
+        };
+      }
+
+      // Colisão com portal
+      if (
+        portal &&
+        player.x < portal.x + portal.width &&
+        player.x + player.width > portal.x &&
+        player.y < portal.y + portal.height &&
+        player.y + player.height > portal.y
+      ) {
+        // Transição para o 3D
+        transitionTo3D();
       }
     }
 
+    // Função para desenhar no canvas
     function draw() {
-      // Fundo
       ctx.drawImage(imgFundo, 0, 0, canvas.width, canvas.height);
-
-      // Jogador
       ctx.drawImage(imgNave, player.x, player.y, player.width, player.height);
+      
+      // Desenhando tiros
+      bullets.forEach((b) => ctx.fillRect(b.x, b.y, 4, 10));
 
-      // Tiros
-      ctx.fillStyle = "red";
-      bullets.forEach((b) => {
-        ctx.fillRect(b.x, b.y, 4, 10);
-      });
+      // Desenhando inimigos
+      enemies.forEach((e) => ctx.drawImage(imgInimigo, e.x, e.y, e.width, e.height));
 
-      // Inimigos
-      enemies.forEach((e) => {
-        ctx.drawImage(imgInimigo, e.x, e.y, e.width, e.height);
-      });
+      // Desenhando o portal
+      if (portal) ctx.drawImage(imgPortal, portal.x, portal.y, portal.width, portal.height);
 
-      // HUD: Vidas
+      // Desenhando HUD: pontos e vidas
       ctx.fillStyle = "white";
       ctx.font = "20px Arial";
-      ctx.fillText("Vidas: " + vidas, 10, 30);
+      ctx.fillText("Pontos: " + pontos, 10, 30);
+      ctx.fillText("Vidas: " + vidas, 10, 60);
 
       // Fim de jogo
       if (gameOver) {
@@ -145,6 +166,43 @@
       }
     }
 
+    // Função de transição para o 3D
+    function transitionTo3D() {
+      // Esconde o canvas 2D
+      canvas.style.display = "none";
+
+      // Cria o canvas 3D
+      const canvas3D = document.createElement("canvas");
+      document.body.appendChild(canvas3D);
+      canvas3D.style.display = "block";
+      canvas3D.style.width = "100%";
+      canvas3D.style.height = "100%";
+      const renderer = new THREE.WebGLRenderer({ canvas: canvas3D });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      // Criação da cena 3D
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 5;
+
+      // Adicionando um cubo na cena
+      const geometry = new THREE.BoxGeometry();
+      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+      const cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
+
+      // Função de animação 3D
+      function animate() {
+        requestAnimationFrame(animate);
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    }
+
+    // Loop do jogo
     function loop() {
       update();
       draw();
