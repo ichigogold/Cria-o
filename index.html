@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Jogo da Nave</title>
+  <title>Jogo da Nave - Fase 2D</title>
   <style>
     body {
       margin: 0;
@@ -17,68 +17,53 @@
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    // Ajuste o tamanho do canvas para ocupar a tela inteira
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    
-    // Redimensiona o canvas sempre que a janela mudar de tamanho
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();  // Chama a função ao carregar a página
-
-    // Carregando imagens
     const imgNave = new Image();
-    imgNave.src = "nave.png";  // Adicione a imagem da nave
-
-    const imgVida = new Image();
-    imgVida.src = "vida.png";  // Adicione a imagem da vida
+    imgNave.src = "nave.png";
 
     const imgFundo = new Image();
-    imgFundo.src = "fundo.jpeg";  // Adicione a imagem de fundo
+    imgFundo.src = "fundo.png";
 
     const imgPortal = new Image();
-    imgPortal.src = "portal.png";  // Adicione a imagem do portal
+    imgPortal.src = "portal.png";
 
-    // Inimigos
-    const enemyImages = [
-      new Image(),  // Inimigo 1
-      new Image(),  // Inimigo 2
-      new Image(),  // Inimigo 3
-      new Image(),  // Inimigo 4
-      new Image()   // Inimigo 5
-    ];
+    const imgVida = new Image();
+    imgVida.src = "vida.png";
 
-    enemyImages[0].src = "inimigo.PNG1";  // Inimigo 1
-    enemyImages[1].src = "inimigo.PNG2";  // Inimigo 2
-    enemyImages[2].src = "inimigo.PNG3";  // Inimigo 3
-    enemyImages[3].src = "inimigo.PNG4";  // Inimigo 4
-    enemyImages[4].src = "inimigo.PNG5";  // Inimigo 5
+    const inimigoImgs = [
+      "inimigo.PNG1",
+      "inimigo.PNG2",
+      "inimigo.PNG3",
+      "inimigo.PNG4",
+      "inimigo.PNG5"
+    ].map(src => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
 
-    // Objetos do jogo
-    let player = { x: canvas.width / 2 - 20, y: canvas.height - 60, width: 40, height: 40 };
+    let player = { x: 180, y: 500, width: 40, height: 40 };
     let bullets = [];
     let enemies = [];
     let keys = {};
     let vidas = 3;
     let pontos = 0;
     let gameOver = false;
-    let paused = false;
+    let pause = false;
+    let portalAtivo = false;
 
-    // Controles
     document.addEventListener("keydown", (e) => {
       keys[e.key] = true;
       if (e.key === " ") {
         bullets.push({ x: player.x + 18, y: player.y });
       }
-      if (e.key === "p") {
-        paused = !paused;
+      if (e.key === "p" || e.key === "P") {
+        pause = !pause;
       }
     });
 
@@ -86,97 +71,44 @@
       keys[e.key] = false;
     });
 
-    // Tipos de inimigos
-    const enemyTypes = [
-      { width: 40, height: 40, speed: 2, vida: 1, pontos: 20, habilidade: "normal", img: enemyImages[0] },
-      { width: 40, height: 40, speed: 1.5, vida: 2, pontos: 40, habilidade: "resistente", img: enemyImages[1] },
-      { width: 40, height: 40, speed: 2, vida: 1, pontos: 30, habilidade: "explode", img: enemyImages[2] },
-      { width: 40, height: 40, speed: 4, vida: 1, pontos: 60, habilidade: "rapido", img: enemyImages[3] },
-      { width: 40, height: 40, speed: 2, vida: 1, pontos: 50, habilidade: "zigzag", dir: 1, img: enemyImages[4] }
-    ];
-
-    // Função para gerar inimigos
-    function spawnEnemies(n = 3) {
-      for (let i = 0; i < n; i++) {
-        const tipo = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
-        enemies.push({
-          x: Math.random() * (canvas.width - tipo.width),
-          y: Math.random() * -300,
-          width: tipo.width,
-          height: tipo.height,
-          speed: tipo.speed,
-          vida: tipo.vida,
-          pontos: tipo.pontos,
-          habilidade: tipo.habilidade,
-          dir: tipo.dir || 1,
-          img: tipo.img
-        });
-      }
+    function spawnEnemy() {
+      const tipo = Math.floor(Math.random() * 5);
+      let enemy = {
+        tipo,
+        x: Math.random() * (canvas.width - 40),
+        y: 0,
+        width: 40,
+        height: 40,
+        imagem: inimigoImgs[tipo],
+        habilidade: tipo === 0 ? "lento" :
+                    tipo === 1 ? "zigzag" :
+                    tipo === 2 ? "divide" :
+                    tipo === 3 ? "rapido" :
+                    "zigzag"
+      };
+      enemies.push(enemy);
     }
 
-    // Função para atualizar o estado do jogo
     function update() {
-      if (paused || gameOver) return;
+      if (gameOver || pause) return;
 
-      // Movimento do jogador
-      if (keys["ArrowLeft"] && player.x > 0) {
-        player.x -= 5;
-      }
-      if (keys["ArrowRight"] && player.x < canvas.width - player.width) {
-        player.x += 5;
-      }
+      if (keys["ArrowLeft"] && player.x > 0) player.x -= 5;
+      if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += 5;
 
-      // Movimento dos tiros
       bullets.forEach((b, i) => {
         b.y -= 7;
         if (b.y < 0) bullets.splice(i, 1);
       });
 
-      // Movimento e colisões dos inimigos
       enemies.forEach((enemy, ei) => {
-        enemy.y += enemy.speed;
-
-        // Habilidade Zigue-Zague
-        if (enemy.habilidade === "zigzag") {
-          enemy.x += 2 * enemy.dir;
-          if (enemy.x < 0 || enemy.x > canvas.width - enemy.width) {
-            enemy.dir *= -1;
-          }
-        }
-
-        // Inimigo Explosivo
-        if (enemy.habilidade === "explode" && enemy.vida <= 0) {
-          pontos += enemy.pontos;
-          enemies.push({
-            x: enemy.x,
-            y: enemy.y,
-            width: 20,
-            height: 20,
-            speed: 3,
-            vida: 1,
-            pontos: 10,
-            habilidade: "normal",
-            img: enemy.img
-          });
-          enemies.push({
-            x: enemy.x + 20,
-            y: enemy.y,
-            width: 20,
-            height: 20,
-            speed: 3,
-            vida: 1,
-            pontos: 10,
-            habilidade: "normal",
-            img: enemy.img
-          });
-          enemies.splice(ei, 1);
-        }
-
-        if (enemy.y > canvas.height) {
-          enemies.splice(ei, 1);
-          vidas--;
-          if (vidas <= 0) gameOver = true;
-          return;
+        // Habilidades especiais
+        if (enemy.habilidade === "rapido") {
+          enemy.y += 4;
+        } else if (enemy.habilidade === "zigzag") {
+          enemy.y += 2;
+          enemy.x += Math.sin(enemy.y / 20) * 2;
+        } else {
+          enemy.y += 2;
         }
 
         // Colisão com jogador
@@ -189,7 +121,6 @@
           enemies.splice(ei, 1);
           vidas--;
           if (vidas <= 0) gameOver = true;
-          return;
         }
 
         // Colisão com tiros
@@ -200,89 +131,116 @@
             b.y < enemy.y + enemy.height &&
             b.y + 10 > enemy.y
           ) {
-            enemy.vida--;
             bullets.splice(bi, 1);
-            if (enemy.vida <= 0) {
-              pontos += enemy.pontos;
-              if (enemy.habilidade === "explode") {
-                enemies.push({
-                  x: enemy.x,
-                  y: enemy.y,
-                  width: 20,
-                  height: 20,
-                  speed: 3,
-                  vida: 1,
-                  pontos: 10,
-                  habilidade: "normal",
-                  img: enemy.img
-                });
-                enemies.push({
-                  x: enemy.x + 20,
-                  y: enemy.y,
-                  width: 20,
-                  height: 20,
-                  speed: 3,
-                  vida: 1,
-                  pontos: 10,
-                  habilidade: "normal",
-                  img: enemy.img
-                });
-              }
-              enemies.splice(ei, 1);
+            enemies.splice(ei, 1);
+            pontos += 100;
+
+            // Divisão
+            if (enemy.habilidade === "divide") {
+              enemies.push({
+                tipo: 0,
+                x: enemy.x - 10,
+                y: enemy.y,
+                width: 20,
+                height: 20,
+                imagem: inimigoImgs[0],
+                habilidade: "lento"
+              }, {
+                tipo: 1,
+                x: enemy.x + 10,
+                y: enemy.y,
+                width: 20,
+                height: 20,
+                imagem: inimigoImgs[1],
+                habilidade: "lento"
+              });
             }
           }
         });
+
+        // Inimigo passou pelo jogador
+        if (enemy.y > canvas.height) {
+          enemies.splice(ei, 1);
+          vidas--;
+          if (vidas <= 0) gameOver = true;
+        }
       });
 
-      // Reposição dos inimigos
-      if (enemies.length === 0 && !gameOver) {
-        spawnEnemies();
+      // Portal
+      if (pontos >= 100000 && !portalAtivo) {
+        portalAtivo = true;
+        enemies.push({
+          tipo: "portal",
+          x: Math.random() * (canvas.width - 40),
+          y: 0,
+          width: 40,
+          height: 40,
+          imagem: imgPortal,
+          habilidade: "portal"
+        });
+      }
+
+      // Colisão com portal
+      enemies.forEach((enemy) => {
+        if (enemy.habilidade === "portal") {
+          if (
+            player.x < enemy.x + enemy.width &&
+            player.x + player.width > enemy.x &&
+            player.y < enemy.y + enemy.height &&
+            player.y + player.height > enemy.y
+          ) {
+            window.location.href = "fase3d.html";
+          }
+        }
+      });
+
+      // Spawn inimigos
+      if (enemies.length < 5 && !gameOver) {
+        if (Math.random() < 0.03) spawnEnemy();
       }
     }
 
-    // Função para desenhar o jogo
     function draw() {
-      ctx.drawImage(imgFundo, 0, 0, canvas.width, canvas.height); // Fundo
-      ctx.drawImage(imgNave, player.x, player.y, player.width, player.height); // Nave
+      ctx.drawImage(imgFundo, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(imgNave, player.x, player.y, player.width, player.height);
 
-      // Tiros
-      ctx.fillStyle = "red";
       bullets.forEach((b) => {
+        ctx.fillStyle = "red";
         ctx.fillRect(b.x, b.y, 4, 10);
       });
 
-      // Inimigos
       enemies.forEach((e) => {
-        ctx.drawImage(e.img, e.x, e.y, e.width, e.height);
+        ctx.drawImage(e.imagem, e.x, e.y, e.width, e.height);
       });
 
-      // HUD: Vidas
-      ctx.fillStyle = "white";
-      ctx.font = "20px Arial";
-      ctx.fillText("Vidas: " + vidas, 10, 30);
-      ctx.fillText("Pontos: " + pontos, canvas.width - 100, 30);
+      // HUD
+      for (let i = 0; i < vidas; i++) {
+        ctx.drawImage(imgVida, 10 + i * 30, 10, 25, 25);
+      }
 
-      // Fim de jogo
+      ctx.fillStyle = "white";
+      ctx.font = "16px Arial";
+      ctx.fillText("Pontos: " + pontos, 10, 50);
+
       if (gameOver) {
         ctx.fillStyle = "red";
         ctx.font = "40px Arial";
         ctx.fillText("FIM DE JOGO", 80, canvas.height / 2);
       }
 
-      // Portal
-      if (pontos >= 100000) {
-        ctx.drawImage(imgPortal, canvas.width / 2 - 25, canvas.height / 2 - 25, 50, 50);
+      if (pause) {
+        ctx.fillStyle = "yellow";
+        ctx.font = "30px Arial";
+        ctx.fillText("PAUSADO", 130, canvas.height / 2);
       }
     }
 
-    // Função do loop de animação
     function loop() {
       update();
       draw();
       requestAnimationFrame(loop);
     }
 
-    spawnEnemies();  // Gerar os inimigos no início
     loop();
   </script>
 </body>
