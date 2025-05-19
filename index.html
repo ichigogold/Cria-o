@@ -7,40 +7,54 @@
     body {
       margin: 0;
       overflow: hidden;
-      background: black;
+      background: rgb(153, 0, 255);
     }
     canvas {
       display: block;
       margin: 0 auto;
-      background: #111;
+      background: #ff0000;
+    }
+    /* Estilo para o botão de reset */
+    #resetButton {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #ff6600;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    #resetButton:hover {
+      background-color: #cc5200;
     }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <!-- Botão de reset -->
+  <button id="resetButton">Resetar Jogo</button>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
     const imgNave = new Image();
-    imgNave.src = "nave.png";
+    imgNave.src = "images.jpeg";
 
     const imgFundo = new Image();
-    imgFundo.src = "fundo.png";
-
-    const imgPortal = new Image();
-    imgPortal.src = "portal.png";
+    imgFundo.src = "photo.jpeg";
 
     const imgVida = new Image();
-    imgVida.src = "vida.png";
+    imgVida.src = "t.png";
 
     const inimigoImgs = [
-      "inimigo.PNG1",
-      "inimigo.PNG2",
-      "inimigo.PNG3",
-      "inimigo.PNG4",
-      "inimigo.PNG5"
+      "jp.jpeg",
+      "qe.jpeg",
+      "ai.png",
+      "qr.jpeg",
+      "qo.jpeg"
     ].map(src => {
       const img = new Image();
       img.src = src;
@@ -53,9 +67,10 @@
     let keys = {};
     let vidas = 3;
     let pontos = 0;
+    let combo = 0; // Contador de combo de inimigos destruídos consecutivamente
+    let tempoSobrevivido = 0; // Variável para tempo
     let gameOver = false;
     let pause = false;
-    let portalAtivo = false;
 
     document.addEventListener("keydown", (e) => {
       keys[e.key] = true;
@@ -88,6 +103,23 @@
       };
       enemies.push(enemy);
     }
+
+    // Função para resetar o jogo
+    function resetGame() {
+      player = { x: 180, y: 500, width: 40, height: 40 };
+      bullets = [];
+      enemies = [];
+      keys = {};
+      vidas = 3;
+      pontos = 0;
+      combo = 0;
+      tempoSobrevivido = 0;
+      gameOver = false;
+      resetGame = false
+      pause = false;
+    }
+
+    document.getElementById("resetButton").addEventListener("click", resetGame);
 
     function update() {
       if (gameOver || pause) return;
@@ -133,7 +165,7 @@
           ) {
             bullets.splice(bi, 1);
             enemies.splice(ei, 1);
-            pontos += 100;
+            pontos += 100; // Pontuação por inimigo destruído
 
             // Divisão
             if (enemy.habilidade === "divide") {
@@ -155,6 +187,8 @@
                 habilidade: "lento"
               });
             }
+
+            combo++; // Aumenta o combo
           }
         });
 
@@ -166,37 +200,15 @@
         }
       });
 
-      // Portal
-      if (pontos >= 100000 && !portalAtivo) {
-        portalAtivo = true;
-        enemies.push({
-          tipo: "portal",
-          x: Math.random() * (canvas.width - 40),
-          y: 0,
-          width: 40,
-          height: 40,
-          imagem: imgPortal,
-          habilidade: "portal"
-        });
-      }
-
-      // Colisão com portal
-      enemies.forEach((enemy) => {
-        if (enemy.habilidade === "portal") {
-          if (
-            player.x < enemy.x + enemy.width &&
-            player.x + player.width > enemy.x &&
-            player.y < enemy.y + enemy.height &&
-            player.y + player.height > enemy.y
-          ) {
-            window.location.href = "fase3d.html";
-          }
-        }
-      });
-
       // Spawn inimigos
       if (enemies.length < 5 && !gameOver) {
         if (Math.random() < 0.03) spawnEnemy();
+      }
+
+      // Incrementa a pontuação por tempo
+      tempoSobrevivido++;
+      if (tempoSobrevivido % 60 === 0) {
+        pontos += 10; // Adiciona 10 pontos a cada 60 frames (1 segundo)
       }
     }
 
@@ -218,15 +230,35 @@
         ctx.drawImage(imgVida, 10 + i * 30, 10, 25, 25);
       }
 
-      ctx.fillStyle = "white";
+      ctx.fillStyle = "red";
       ctx.font = "16px Arial";
       ctx.fillText("Pontos: " + pontos, 10, 50);
+
+      if (combo > 0) {
+        ctx.fillStyle = "yellow";
+        ctx.font = "16px Arial";
+        ctx.fillText("Combo: " + combo, 10, 70);
+      }
 
       if (gameOver) {
         ctx.fillStyle = "red";
         ctx.font = "40px Arial";
-        ctx.fillText("FIM DE JOGO", 80, canvas.height / 2);
+        ctx.fillText("FIM DE JOGO", 80, canvas.height / 2); 
+        document.addEventListener("keydown", (e) => {
+      keys[e.key] = true;
+      if (e.key === " ") {
+        bullets.push({ x: player.x + 0, y: player.y });
       }
+      if (e.key === "r" || e.key === "R") {
+        resetGame = !resetGame;
+      }
+    });
+
+      }
+   
+    document.addEventListener("keyup", (e) => {
+      keys[e.key] = false;
+    });
 
       if (pause) {
         ctx.fillStyle = "yellow";
@@ -242,6 +274,7 @@
     }
 
     loop();
+
   </script>
 </body>
 </html>
