@@ -45,7 +45,7 @@
     imgFundo.src = "photo.jpeg";
 
     const imgVida = new Image();
-    imgVida.src = "t.png"; // Coloque a imagem na mesma pasta ou use o caminho correto
+    imgVida.src = "t.png";
 
     const inimigoImgs = [
       "jp.jpeg", "qe.jpeg", "ai.png", "qr.jpeg", "qo.jpeg"
@@ -54,6 +54,10 @@
       img.src = src;
       return img;
     });
+
+    // Adicionando a imagem de spritesheet de coração
+    const imgCoracao = new Image();
+    imgCoracao.src = "file_00000000fd7c61f7a475e0693a9d194d (1).png"; // Substitua pelo caminho correto
 
     let player = { x: 180, y: 500, width: 40, height: 40 };
     let bullets = [];
@@ -212,7 +216,7 @@
       ctx.drawImage(imgNave, player.x, player.y, player.width, player.height);
 
       bullets.forEach((b) => {
-        ctx.fillStyle = "red";
+        ctx.fillStyle = "blue";
         ctx.fillRect(b.x, b.y, 4, 10);
       });
 
@@ -224,10 +228,10 @@
       const currentFrame = Math.floor(frame / frameDelay) % totalFrames;
       for (let i = 0; i < vidas; i++) {
         ctx.drawImage(
-          file_00000000fd7c61f7a475e0693a9d194d (1).png,
-          currentFrame * heartWidth, 0,
+          imgCoracao,  // A variável correta da imagem
+          currentFrame * heartWidth, 0,  // Corte da sprite
           heartWidth, heartHeight,
-          10 + i * (heartWidth + 5), 10,
+          10 + i * (heartWidth + 5), 10,  // Posição no canvas
           heartWidth, heartHeight
         );
       }
