@@ -228,10 +228,13 @@
       const currentFrame = Math.floor(frame / frameDelay) % totalFrames;
       for (let i = 0; i < vidas; i++) {
         ctx.drawImage(
-          imgCoracao,  // A variável correta da imagem
-          currentFrame * heartWidth, 0,  // Corte da sprite
+          file_00000000fd7c61f7a475e0693a9d194d (1).png, 
+          // A variável correta da imagem
+          currentFrame * heartWidth, 0,  
+          // Corte da sprite
           heartWidth, heartHeight,
-          10 + i * (heartWidth + 5), 10,  // Posição no canvas
+          10 + i * (heartWidth + 5), 10,  
+          // Posição no canvas
           heartWidth, heartHeight
         );
       }
