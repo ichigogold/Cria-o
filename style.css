@@ -1,0 +1,28 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background: rgb(153, 0, 255);
+}
+
+canvas {
+  display: block;
+  margin: 0 auto;
+  background: transparent;
+}
+
+#resetButton {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 10px 20px;
+  font-size: 18px;
+  background-color: #ff6600;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+#resetButton:hover {
+  background-color: #cc5200;
+}
+
