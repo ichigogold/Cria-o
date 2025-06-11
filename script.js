@@ -8,7 +8,7 @@ const imgFundo = new Image();
 imgFundo.src = "photo.jpeg";
 
 const imgCoracao = new Image();
-imgCoracao.src = "coracao.png"; // Ícone de coração
+imgCoracao.src = "t.png";
 
 const inimigoImgs = [
   "jp.jpeg", "qe.jpeg", "ai.png", "qr.jpeg", "qo.jpeg"
