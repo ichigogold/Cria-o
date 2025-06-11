@@ -7,6 +7,9 @@ imgNave.src = "images.jpeg";
 const imgFundo = new Image();
 imgFundo.src = "photo.jpeg";
 
+const imgCoracao = new Image();
+imgCoracao.src = "coracao.png"; // Ícone de coração
+
 const inimigoImgs = [
   "jp.jpeg", "qe.jpeg", "ai.png", "qr.jpeg", "qo.jpeg"
 ].map(src => {
@@ -15,7 +18,7 @@ const inimigoImgs = [
   return img;
 });
 
-let player = { x: 180, y: 500, width: 40, height: 40 };
+let player = { x: 180, y: 500, width: 40, height: 40, invencivel: 0 };
 let bullets = [], enemies = [], keys = {};
 let vidas = 3, pontos = 0, combo = 0, tempoSobrevivido = 0;
 let gameOver = false, pause = false;
@@ -33,10 +36,16 @@ document.addEventListener("keyup", (e) => {
 document.getElementById("resetButton").addEventListener("click", resetGame);
 
 function resetGame() {
-  player = { x: 180, y: 500, width: 40, height: 40 };
-  bullets = []; enemies = []; keys = {};
-  vidas = 3; pontos = 0; combo = 0;
-  tempoSobrevivido = 0; gameOver = false; pause = false;
+  player = { x: 180, y: 500, width: 40, height: 40, invencivel: 0 };
+  bullets = [];
+  enemies = [];
+  keys = {};
+  vidas = 3;
+  pontos = 0;
+  combo = 0;
+  tempoSobrevivido = 0;
+  gameOver = false;
+  pause = false;
 }
 
 function spawnEnemy() {
@@ -55,6 +64,8 @@ function spawnEnemy() {
 function update() {
   if (gameOver || pause) return;
 
+  if (player.invencivel > 0) player.invencivel--;
+
   if (keys["ArrowLeft"] && player.x > 0) player.x -= 5;
   if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += 5;
 
@@ -70,17 +81,21 @@ function update() {
       enemy.x += Math.sin(enemy.y / 20) * 2;
     } else enemy.y += 2;
 
+    // Colisão com o jogador
     if (
+      player.invencivel === 0 &&
       player.x < enemy.x + enemy.width &&
       player.x + player.width > enemy.x &&
       player.y < enemy.y + enemy.height &&
       player.y + player.height > enemy.y
     ) {
       vidas--;
+      player.invencivel = 60; // 1 segundo de invencibilidade
       if (vidas <= 0) gameOver = true;
       return false;
     }
 
+    // Colisão com bala
     bullets.forEach((b, bi) => {
       if (
         b.x < enemy.x + enemy.width &&
@@ -129,7 +144,11 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(imgFundo, 0, 0, canvas.width, canvas.height);
-  ctx.drawImage(imgNave, player.x, player.y, player.width, player.height);
+
+  // Piscar se estiver invencível
+  if (player.invencivel === 0 || player.invencivel % 10 < 5) {
+    ctx.drawImage(imgNave, player.x, player.y, player.width, player.height);
+  }
 
   bullets.forEach(b => {
     ctx.fillStyle = "blue";
@@ -140,6 +159,7 @@ function draw() {
     ctx.drawImage(e.imagem, e.x, e.y, e.width, e.height);
   });
 
+  // Pontos e Combo
   ctx.fillStyle = "red";
   ctx.font = "16px Arial";
   ctx.fillText("Pontos: " + pontos, 10, 30);
@@ -147,6 +167,11 @@ function draw() {
   if (combo > 0) {
     ctx.fillStyle = "yellow";
     ctx.fillText("Combo: " + combo, 10, 50);
+  }
+
+  // Vidas (com corações)
+  for (let i = 0; i < vidas; i++) {
+    ctx.drawImage(imgCoracao, 10 + i * 28, 60, 24, 24);
   }
 
   if (gameOver) {
@@ -168,7 +193,7 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-const imagens = [imgNave, imgFundo, ...inimigoImgs];
+const imagens = [imgNave, imgFundo, imgCoracao, ...inimigoImgs];
 let carregadas = 0;
 imagens.forEach(img => {
   img.onload = () => {
