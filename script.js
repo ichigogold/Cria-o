@@ -2,7 +2,7 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 const imgNave = new Image();
-imgNave.src = "images.jpeg";
+imgNave.src = "drone de guerra.png";
 
 const imgFundo = new Image();
 imgFundo.src = "photo.jpeg";
@@ -81,7 +81,7 @@ function update() {
       enemy.x += Math.sin(enemy.y / 20) * 2;
     } else enemy.y += 2;
 
-    // Colisão com o jogador
+
     if (
       player.invencivel === 0 &&
       player.x < enemy.x + enemy.width &&
@@ -90,12 +90,12 @@ function update() {
       player.y + player.height > enemy.y
     ) {
       vidas--;
-      player.invencivel = 60; // 1 segundo de invencibilidade
+      player.invencivel = 60;
       if (vidas <= 0) gameOver = true;
       return false;
     }
 
-    // Colisão com bala
+    
     bullets.forEach((b, bi) => {
       if (
         b.x < enemy.x + enemy.width &&
@@ -145,7 +145,6 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(imgFundo, 0, 0, canvas.width, canvas.height);
 
-  // Piscar se estiver invencível
   if (player.invencivel === 0 || player.invencivel % 10 < 5) {
     ctx.drawImage(imgNave, player.x, player.y, player.width, player.height);
   }
@@ -159,7 +158,6 @@ function draw() {
     ctx.drawImage(e.imagem, e.x, e.y, e.width, e.height);
   });
 
-  // Pontos e Combo
   ctx.fillStyle = "red";
   ctx.font = "16px Arial";
   ctx.fillText("Pontos: " + pontos, 10, 30);
@@ -169,7 +167,6 @@ function draw() {
     ctx.fillText("Combo: " + combo, 10, 50);
   }
 
-  // Vidas (com corações)
   for (let i = 0; i < vidas; i++) {
     ctx.drawImage(imgCoracao, 10 + i * 28, 60, 24, 24);
   }
