@@ -2,28 +2,37 @@ body {
   margin: 0;
   overflow: hidden;
   background: rgb(153, 0, 255);
+  font-family: Arial, sans-serif;
+  user-select: none;
 }
 
 canvas {
   display: block;
   margin: 0 auto;
-  background: transparent;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
 }
 
 #resetButton {
   position: absolute;
   top: 20px;
-  left: 20px;
+  right: 20px;
   padding: 10px 20px;
-  font-size: 18px;
-  background-color: #ff6600;
-  border: none;
+  font-size: 16px;
+  background: linear-gradient(45deg, #ff416c, #ff4b2b);
   color: white;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
+  transition: 0.3s;
 }
-    background-imag 
 
 #resetButton:hover {
-  background-color: #cc5200;
+  transform: scale(1.1);
+  box-shadow: 0 0 15px #ff4b2b;
 }
 
+#resetButton:active {
+  transform: scale(0.95);
+  background: linear-gradient(45deg, #ff4b2b, #ff416c);
+}
